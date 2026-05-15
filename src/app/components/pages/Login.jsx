@@ -12,17 +12,58 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Mock login logic
+
+    setError('');
+
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
-    // Simulate successful login
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userEmail', email);
-    window.location.href = '/dashboard';
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (!response.ok) {
+        setError(data.message || 'Login failed');
+        return;
+      }
+
+      const user = data.data.user;
+      const token = data.data.accessToken;
+
+      // Save auth info
+      localStorage.setItem('token', token);
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userName', user.fullName);
+      localStorage.setItem('userRole', user.role);
+
+      // Redirect
+      window.location.href =
+        user.role === 'official'
+          ? '/admin-dashboard'
+          : '/dashboard';
+
+    } catch (error) {
+      console.error(error);
+      setError('Server error');
+    }
   };
 
   return (

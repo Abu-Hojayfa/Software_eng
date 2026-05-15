@@ -37,7 +37,7 @@ export function Signup() {
     checkPasswordStrength(value);
   };
 
-  const handleSignup = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -66,19 +66,56 @@ export function Signup() {
       return;
     }
 
-    // Store session info
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userEmail', formData.email);
-    localStorage.setItem('userName', formData.name);
-    localStorage.setItem('userRole', role);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: role,
+          phone: formData.phone || "",
+          organization: formData.department || "",
+          nationalId: formData.governmentId ||"",
+        }),
+      });
 
-    if (role === 'official') {
-      localStorage.setItem('isAdmin', 'true');
-      localStorage.setItem('officialId', formData.governmentId);
-      localStorage.setItem('department', formData.department);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Registration failed');
+        return;
+      }
+
+      // Store session info
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('userName', formData.name);
+      localStorage.setItem('userRole', role);
+
+      if (role === 'official') {
+        localStorage.setItem('isAdmin', 'true');
+        localStorage.setItem('officialId', formData.governmentId);
+        localStorage.setItem('department', formData.department);
+      }
+
+      // Optional token save
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+
+      window.location.href =
+        role === 'official'
+          ? '/admin-dashboard'
+          : '/dashboard';
+
+    } catch (error) {
+      console.error(error);
+      setError('Server error');
     }
-
-    window.location.href = role === 'official' ? '/admin-dashboard' : '/dashboard';
   };
 
   const getStrengthColor = () => {
@@ -118,7 +155,7 @@ export function Signup() {
 
         {/* Signup Card */}
         <GlassCard className="p-8">
-          <form onSubmit={handleSignup} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -304,11 +341,10 @@ export function Signup() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Password strength:</span>
-                    <span className={`font-semibold ${
-                      passwordStrength <= 1 ? 'text-destructive' :
-                      passwordStrength === 2 ? 'text-yellow-500' :
-                      passwordStrength === 3 ? 'text-blue-500' : 'text-primary'
-                    }`}>
+                    <span className={`font-semibold ${passwordStrength <= 1 ? 'text-destructive' :
+                        passwordStrength === 2 ? 'text-yellow-500' :
+                          passwordStrength === 3 ? 'text-blue-500' : 'text-primary'
+                      }`}>
                       {getStrengthText()}
                     </span>
                   </div>
@@ -316,9 +352,8 @@ export function Signup() {
                     {[1, 2, 3, 4].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded-full transition-all ${
-                          level <= passwordStrength ? getStrengthColor() : 'bg-muted'
-                        }`}
+                        className={`h-1 flex-1 rounded-full transition-all ${level <= passwordStrength ? getStrengthColor() : 'bg-muted'
+                          }`}
                       />
                     ))}
                   </div>
@@ -389,11 +424,10 @@ export function Signup() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className={`w-full font-semibold ${
-                role === 'official'
+              className={`w-full font-semibold ${role === 'official'
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/30'
                   : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-              }`}
+                }`}
             >
               {role === 'official' ? 'Register as Official' : 'Create Citizen Account'}
             </Button>
