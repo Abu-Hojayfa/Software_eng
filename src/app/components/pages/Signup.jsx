@@ -67,28 +67,30 @@ export function Signup() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fullName: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: role,
-          phone: formData.phone || "",
-          organization: formData.department || "",
-          nationalId: formData.governmentId ||"",
-        }),
-      });
+        const response = await fetch('http://localhost:5000/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role: role,
+            phone: formData.phone || "",
+            organization: formData.department || "",
+            nationalId: formData.governmentId || "",
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        setError(data.message || 'Registration failed');
-        return;
+        if (!response.ok) {
+          setError(data.message || 'Registration failed');
+          return;
       }
+
+      
 
       // Store session info
       localStorage.setItem('isLoggedIn', 'true');
@@ -315,6 +317,60 @@ export function Signup() {
               />
             </div>
 
+            {/* Organization (Optional) */}
+            <div className="space-y-2">
+              <label
+                htmlFor="department"
+                className="text-sm font-medium text-foreground"
+              >
+                Organization{" "}
+                <span className="text-xs text-muted-foreground">
+                  (Optional)
+                </span>
+              </label>
+
+              <Input
+                id="department"
+                type="text"
+                placeholder="Enter your organization"
+                value={formData.department}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    department: e.target.value,
+                  })
+                }
+                className="bg-input border-border text-foreground"
+              />
+            </div>
+
+            {/* Government ID (Optional) */}
+            <div className="space-y-2">
+              <label
+                htmlFor="governmentId"
+                className="text-sm font-medium text-foreground"
+              >
+                Government ID{" "}
+                <span className="text-xs text-muted-foreground">
+                  (Optional)
+                </span>
+              </label>
+
+              <Input
+                id="governmentId"
+                type="text"
+                placeholder="Enter your government ID"
+                value={formData.governmentId}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    governmentId: e.target.value,
+                  })
+                }
+                className="bg-input border-border text-foreground"
+              />
+            </div>
+
             {/* Password */}
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
@@ -342,8 +398,8 @@ export function Signup() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Password strength:</span>
                     <span className={`font-semibold ${passwordStrength <= 1 ? 'text-destructive' :
-                        passwordStrength === 2 ? 'text-yellow-500' :
-                          passwordStrength === 3 ? 'text-blue-500' : 'text-primary'
+                      passwordStrength === 2 ? 'text-yellow-500' :
+                        passwordStrength === 3 ? 'text-blue-500' : 'text-primary'
                       }`}>
                       {getStrengthText()}
                     </span>
@@ -425,8 +481,8 @@ export function Signup() {
             <Button
               type="submit"
               className={`w-full font-semibold ${role === 'official'
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/30'
-                  : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/30'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                 }`}
             >
               {role === 'official' ? 'Register as Official' : 'Create Citizen Account'}

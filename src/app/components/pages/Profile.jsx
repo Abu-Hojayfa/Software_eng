@@ -64,35 +64,91 @@ export function Profile() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Sync with localStorage if available
-    const savedName = localStorage.getItem('userName');
-    const savedEmail = localStorage.getItem('userEmail');
-    if (savedName || savedEmail) {
-      setUserData(prev => ({
-        ...prev,
-        name: savedName || prev.name,
-        email: savedEmail || prev.email
-      }));
-    }
-
-    // Simulate API Connection
-    const fetchSettings = async () => {
+    const fetchProfile = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const token = localStorage.getItem('token');
+
+        const response = await fetch(
+          'http://localhost:5000/api/users/profile',
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.log(data);
+          return;
+        }
+
+        const user = data.data.user;
+
+        setUserData({
+          name: user.fullName || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          location: user.location || '',
+          joinedDate: user.createdAt || '',
+          reportsSubmitted: user.reportsSubmitted || 0,
+          reportsResolved: user.reportsResolved || 0,
+        });
+
         setIsLoading(false);
+
       } catch (error) {
-        console.error('API Connection failed:', error);
+        console.error(error);
         setIsLoading(false);
       }
     };
-    fetchSettings();
+
+    fetchProfile();
   }, []);
 
-  const handleSave = () => {
-    localStorage.setItem('userName', userData.name);
-    localStorage.setItem('userEmail', userData.email);
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 3000);
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(
+        'http://localhost:5000/api/users/profile',
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: userData.name,
+            email: userData.email,
+            phone: userData.phone,
+            location: userData.location,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.log(data);
+        return;
+      }
+
+      localStorage.setItem('userName', userData.name);
+      localStorage.setItem('userEmail', userData.email);
+
+      setSavedMessage(true);
+
+      setTimeout(() => {
+        setSavedMessage(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   if (isLoading) {
